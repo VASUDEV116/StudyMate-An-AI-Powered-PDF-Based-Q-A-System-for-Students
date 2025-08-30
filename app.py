@@ -2,9 +2,10 @@ import os
 import streamlit as st
 import fitz  # PyMuPDF
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAI
+
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 
@@ -132,3 +133,4 @@ user_question = st.text_input("Enter your question here:")
 
 if user_question:
     user_input(user_question)
+
