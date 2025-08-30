@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StudyMate - AI PDF Q&A</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 2rem;
+    background: #f9f9f9;
+  }
+  h1 {
+    color: #2c3e50;
+  }
+  #upload-section, #qa-section {
+    background: white;
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #ccc;
+  }
+  input[type="file"] {
+    margin-bottom: 1rem;
+  }
+  button {
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+  }
+  textarea {
+    width: 100%;
+    height: 80px;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+  #answer {
+    background: #ecf0f1;
+    padding: 1rem;
+    border-radius: 6px;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+  <h1>StudyMate - AI PDF Q&A System</h1>
+
+  <div id="upload-section">
+    <h2>Upload PDF</h2>
+    <input type="file" id="pdfFile" accept="application/pdf" />
+    <br />
+    <button id="uploadBtn">Upload & Process</button>
+    <p id="uploadStatus"></p>
+  </div>
+
+  <div id="qa-section" style="display:none;">
+    <h2>Ask a Question</h2>
+    <textarea id="questionInput" placeholder="Type your question here..."></textarea>
+    <br />
+    <button id="askBtn">Ask</button>
+    <h3>Answer:</h3>
+    <div id="answer"></div>
+  </div>
+
+<script>
+  let currentFilename = null;
+
+  document.getElementById('uploadBtn').onclick = async () => {
+    const fileInput = document.getElementById('pdfFile');
+    if (fileInput.files.length === 0) {
+      alert("Please select a PDF file.");
+      return;
+    }
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    document.getElementById('uploadStatus').textContent = "Uploading and processing...";
+    document.getElementById('uploadBtn').disabled = true;
+
+    try {
+      const res = await fetch('http://localhost:5000/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        currentFilename = file.name;
+        document.getElementById('uploadStatus').textContent = data.message;
+        document.getElementById('qa-section').style.display = 'block';
+      } else {
+        document.getElementById('uploadStatus').textContent = data.error || "Upload failed";
+      }
+    } catch (err) {
+      document.getElementById('uploadStatus').textContent = "Error: " + err.message;
+    }
+    document.getElementById('uploadBtn').disabled = false;
+  };
+
+  document.getElementById('askBtn').onclick = async () => {
+    const question = document.getElementById('questionInput').value.trim();
+    if (!question) {
+      alert("Please enter a question.");
+      return;
+    }
+    if (!currentFilename) {
+      alert("Please upload a PDF first.");
+      return;
+    }
+
+    document.getElementById('answer').textContent = "Thinking...";
+
+    try {
+      const res = await fetch('http://localhost:5000/ask', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({filename: currentFilename, question})
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('answer').textContent = data.answer;
+      } else {
+        document.getElementById('answer').textContent = data.error || "Failed to get answer";
+      }
+    } catch (err) {
+      document.getElementById('answer').textContent = "Error: " + err.message;
+    }
+  };
+</script>
+</body>
+</html>
